@@ -27,7 +27,7 @@ pygame.display.set_caption("LiDAR Data")
 slider = Slider(screen, 200, 200, 800, 40, min=0, max=1, step=0.01)
 output = TextBox(screen, 475, 200, 50, 50, fontSize=30)
 
-lidar_usb = Serial('COM7', 230400, timeout=1)
+lidar_usb = Serial('COM5', 230400, timeout=1)
 
 # Global variables for data
 radar_speed = 0
