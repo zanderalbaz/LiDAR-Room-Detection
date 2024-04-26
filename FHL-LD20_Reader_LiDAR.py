@@ -47,9 +47,11 @@ gint = 0
 
 NUM_POINTS = 500
 
-
+# Create figure for animation
 fig = plt.figure()
 ax = fig.add_subplot(1,1,1)
+
+#Create zero vector for x and y points
 x_points = [0] * NUM_POINTS
 y_points = [0] * NUM_POINTS
 
@@ -100,7 +102,7 @@ def pygameDisplay():
         sys.exit()
 
 
-def dbscanNoiseReduction(x_points, y_points, eps=500, min_samples=10, gaussian_sigma=1):
+def dbscanNoiseReduction(x_points, y_points, eps=50, min_samples=5, gaussian_sigma=1):
     points = list(zip(x_points, y_points))
     points = gaussian_filter(points, gaussian_sigma)
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(points)
@@ -159,7 +161,11 @@ def collectData():
                             angle -= 360
                         angles.append(angle)
                         if(intensity[i] > 200 and distances[i] > 10 and distances[i] <= 8000):
-                            x, y = polarToCart(distances[i]*0.01, angles[i])
+                            x, y = polarToCart(distances[i]*0.1, angles[i])
+                            x = math.floor(x)
+                            x = x - (x % 10)
+                            y = math.floor(y)
+                            y = y - (y % 10)
                             x_points = x_points[1:] + [x]
                             y_points = y_points[1:] + [y]
                             if len(x_points) > NUM_POINTS*0.8:
