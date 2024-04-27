@@ -2,13 +2,37 @@ from models import create_3d_cnn
 from models import create_pointnet_model
 from models import create_gnn
 
+# =============================== Convolutional Neural Network ===============================
+"""
+    For a 3D CNN, we ahve to make sure that the LiDAR data is voxelized, 
+    which just means converting the point cloud to a 3D grid.
+
+    For preprocessing we can use voxel grid. Each voxel in the grid can be
+    binary (occupied/unoccupied), or we can use other values like point 
+    density or average intesity. The input shape of the network just has to 
+    match the voxel grids dimensions (depth, heigh, width, channels)
+"""
 def cnn():
     # Code goes here...
 
+# =============================== PointNet Neural  ===============================
+"""
+    PointNet is awesome, like we talked about it handles raw point clouds, 
+    making it highly suitable for our data.
+
+    For preprocessing we'll just need to normalize the point cloud data. For
+    example, centering and scaling. We could also do random sampling or cropping 
+    to standardize the number of points.
+
+    INput Shape: (x,y,z,maybe intensity?)
+"""
 def pointnet():
     # Code goes here...
 
+# =============================== Graph Neural Network ===============================
+"""
 
+"""
 # GNN Example
 def gnn():
     # Parameters
@@ -49,6 +73,7 @@ def gnn():
     accuracy = correct / int(data.test_mask.sum())
     print(f'Accuracy: {accuracy:.4f}')
 
+# =============================== Main ===============================
 def main():
     # cnn()
     # pointnet()
