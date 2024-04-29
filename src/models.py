@@ -15,19 +15,47 @@ import torch_geometric.transforms as T
 #NUM CLASSES: 12
 
 # ======================= CNN Function =======================
-def create_3d_cnn(input_shape, num_classes):
-    model = models.Sequential([
-        layers.Conv3D(32, kernel_size=(3, 3, 3), activation='relu', padding='same', input_shape=input_shape),
-        layers.MaxPooling3D(pool_size=(2, 2, 2)),
-        layers.Conv3D(64, kernel_size=(3, 3, 3), activation='relu', padding='same'),
-        layers.MaxPooling3D(pool_size=(2, 2, 2)),
-        layers.Conv3D(128, kernel_size=(3, 3, 3), activation='relu', padding='same'),
-        layers.MaxPooling3D(pool_size=(2, 2, 2)),
-        layers.Flatten(),
-        layers.Dense(256, activation='relu'),
-        layers.Dropout(0.5),
-        layers.Dense(num_classes, activation='softmax')
+def create_cnn(input_shape, num_classes): 
+    model = Sequential([
+            Reshape((5, 2, 500, 1), input_shape=(5, 2, 500)),  # Reshape input to match the desired input size (5, 2, 500)
+            Conv2D(10, (2, 5), activation="relu"),
+            BatchNormalization(),
+            MaxPooling2D((2, 2)),
     ])
+    assert model.output_shape == (None, 2, 250, 10)
+
+    model.add(Conv2D(25, (2, 5), activation="relu"))
+    assert model.output_shape == (None, 1, 125, 25)
+    model.add(BatchNormalization())
+    model.add(Dropout(rate=0.5))
+    model.add(MaxPooling2D((2, 2), padding="same"))
+
+    model.add(Conv2D(50, (2, 5), activation="relu"))
+    assert model.output_shape == (None, 1, 63, 50)
+    model.add(BatchNormalization())
+    model.add(Dropout(rate=0.5))
+    model.add(MaxPooling2D((2, 2), padding="same"))
+
+    model.add(Conv2D(50, (2, 5), activation="relu"))
+    assert model.output_shape == (None, 1, 32, 50)
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D((2, 2)))
+
+    model.add(Conv2D(100, (1, 5), activation="relu"))  
+    assert model.output_shape == (None, 1, 16, 100)
+    model.add(BatchNormalization())
+
+    model.add(Flatten())
+    assert model.output_shape == (None, 1600) 
+
+    model.add(Dense(100, activation="relu"))
+    assert model.output_shape == (None, 100)
+
+    model.add(Dense(12, activation="softmax")) # We use softmax to identify the most likely classification
+    assert model.output_shape == (None, 12) # We have 12 total labels
+
+    model.summary()
+
     return model
 
 # ======================= PointNet Function =======================
