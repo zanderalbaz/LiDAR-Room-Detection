@@ -85,7 +85,7 @@ def outputPoints(points):
             f.close()
         output_points = []
         output_iter = 0
-        time.sleep(0.1)	
+        time.sleep(0.1)
     return
             
 
