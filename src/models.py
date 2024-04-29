@@ -1,6 +1,8 @@
 # CNN & PointNet
+import numpy as np
+import pandas as pd
 import tensorflow as tf
-import tensorflow.keras import layers, models
+from tensorflow.keras import layers, models
 
 # GNN
 import torch
@@ -11,22 +13,18 @@ import torch_geometric.transforms as T
 
 # ======================= CNN Function =======================
 def create_3d_cnn(input_shape, num_classes):
-    model - models.Sequential()
-
-    model.add(layers.Conv3D(32, kernel_size=(3, 3, 3), activation='relu', padding='same', input_shape=input_shape))
-    model.add(layers.MaxPooling3D(pool_size=(2, 2, 2)))
-
-    model.add(layers.Conv3D(64, kernel_size=(3, 3, 3), activation='relu', padding='same'))
-    model.add(layers.MaxPooling3D(pool_size=(2, 2, 2)))
-
-    model.add(layers.Conv3D(128, kernel_size=(3, 3, 3), activation='relu', padding='same'))
-    model.add(layers.MaxPooling3D(pool_size=(2, 2, 2)))
-
-    model.add(layers.Flatten())
-    model.add(layers.Dense(256, activation='relu'))
-    model.add(layers.Dropout(0.5))
-    model.add(layers.Dense(num_classes, activation='softmax'))
-
+    model = models.Sequential([
+        layers.Conv3D(32, kernel_size=(3, 3, 3), activation='relu', padding='same', input_shape=input_shape),
+        layers.MaxPooling3D(pool_size=(2, 2, 2)),
+        layers.Conv3D(64, kernel_size=(3, 3, 3), activation='relu', padding='same'),
+        layers.MaxPooling3D(pool_size=(2, 2, 2)),
+        layers.Conv3D(128, kernel_size=(3, 3, 3), activation='relu', padding='same'),
+        layers.MaxPooling3D(pool_size=(2, 2, 2)),
+        layers.Flatten(),
+        layers.Dense(256, activation='relu'),
+        layers.Dropout(0.5),
+        layers.Dense(num_classes, activation='softmax')
+    ])
     return model
 
 # ======================= PointNet Function =======================
