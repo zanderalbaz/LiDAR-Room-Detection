@@ -8,9 +8,9 @@ from pygame_widgets.textbox import TextBox
 import math
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from sklearn.cluster import DBSCAN
 from scipy.ndimage import gaussian_filter
 import numpy as np
+from sklearn.decomposition import PCA
 
 pygame.init()
 
@@ -46,10 +46,20 @@ gangle = 0
 gint = 0
 
 NUM_POINTS = 500
+OUTPUT_BATCH_SIZE = 5
+LOCATION_NAME = "ZANDER_DORM_NORTH"
 
 
+NOISE_REDUC_ITERS = 500
+noise_iter = 0
+output_iter = 0
+output_points = []
+
+# Create figure for animation
 fig = plt.figure()
 ax = fig.add_subplot(1,1,1)
+
+#Create zero vector for x and y points
 x_points = [0] * NUM_POINTS
 y_points = [0] * NUM_POINTS
 
@@ -60,12 +70,35 @@ AX_DIM = 800
 ax.set_ylim([-AX_DIM, AX_DIM])
 ax.set_xlim([-AX_DIM, AX_DIM])
 
+
+def outputPoints(points):
+    global output_iter, output_points
+    output_points.append(points)
+    output_iter += 1
+    if(output_iter == OUTPUT_BATCH_SIZE):
+        #OUTPUT POINTS TO FILE
+        with open("labeled_points.csv", 'a') as f:
+            for i in range(OUTPUT_BATCH_SIZE):
+                f.write(str(output_points[i]) + "\t")
+            f.write(f'{LOCATION_NAME}\n')
+            f.close()
+        output_points = []
+        output_iter = 0
+    return
+            
+
 def polarToCart(R, deg):
     return ((R*math.cos((deg*math.pi)/180)), R*math.sin((deg*math.pi)/180))
 
 def animate(i):
-    global x_points, y_points
-    scatter.set_offsets(list(zip(x_points, y_points)))
+    global x_points, y_points, noise_iter
+    points = list(zip(x_points, y_points))
+    if(noise_iter >= NOISE_REDUC_ITERS):
+        xs, ys = noiseReduction(points)
+        points = list(zip(xs, ys))
+        outputPoints(points)
+        points = list(set(points))
+        scatter.set_offsets(points)
 
     return scatter,
 def pygameDisplay():
@@ -100,30 +133,32 @@ def pygameDisplay():
         sys.exit()
 
 
-def dbscanNoiseReduction(x_points, y_points, eps=500, min_samples=10, gaussian_sigma=1):
+def noiseReduction(points, gaussian_sigma=1):
+    #points = gaussian_filter(points, gaussian_sigma)
+    pca = PCA(n_components=2) 
+    
+    for i, (x, y) in enumerate(points): #quantize points to bins of 10 after processing
+        x = int(x)
+        x = x - (x % 5)
+        x_points[i] = x
+        y = int(y)
+        y = y - (y % 5)
+        y_points[i] = y
     points = list(zip(x_points, y_points))
-    points = gaussian_filter(points, gaussian_sigma)
-    db = DBSCAN(eps=eps, min_samples=min_samples).fit(points)
-    labels = db.labels_
+    return x_points, y_points
 
-    clean_x = []
-    clean_y = []
-    for i, label in enumerate(labels):
-        if label != -1:
-            # Clean point
-            clean_x.append(x_points[i])
-            clean_y.append(y_points[i])
 
-    return clean_x, clean_y
 
-            
-
-## ALL PREPROCESSING DONE IN REFERENCE TO:
+## ALL READING AND PREPROCESSING DONE IN REFERENCE TO:
 ##
 ##   https://wiki.youyeetoo.com/en/Lidar/LD20
+##
+## 
 def collectData():
     global radar_speed, starting_angle, distance, signal_strength, end_angle, timestamp
-    global x_points, y_points
+    global x_points, y_points, gint, gdist, gangle
+    global noise_iter
+    output_points = []
     
     try:
         while True:
@@ -159,11 +194,11 @@ def collectData():
                             angle -= 360
                         angles.append(angle)
                         if(intensity[i] > 200 and distances[i] > 10 and distances[i] <= 8000):
-                            x, y = polarToCart(distances[i]*0.01, angles[i])
+                            x, y = polarToCart(distances[i]*0.1, angles[i])
                             x_points = x_points[1:] + [x]
                             y_points = y_points[1:] + [y]
-                            if len(x_points) > NUM_POINTS*0.8:
-                                x_points, y_points = dbscanNoiseReduction(x_points, y_points)
+                            points = list(zip(x_points, y_points))
+                            noise_iter += 1
                             gdist = distances[i]
                             gangle = angles[i]
                             gint = intensity[i]
