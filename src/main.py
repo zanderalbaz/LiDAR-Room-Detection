@@ -1,4 +1,4 @@
-from models import create_3d_cnn
+from models import create_cnn
 from models import create_pointnet_model
 from models import create_gnn
 
