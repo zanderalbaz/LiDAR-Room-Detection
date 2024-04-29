@@ -29,9 +29,9 @@ def processPoints_(ps):
     for point in ps:
         p = point.split(', ')
         x = p[0]
-        xs.append(int(x))
+        xs.append(int(float(x))) #convert to float then int to catch points that were not quantized
         y = p[1]
-        ys.append(int(y))
+        ys.append(int(float(y))) 
         
     points = []
     points.append(np.array(xs))
@@ -39,7 +39,7 @@ def processPoints_(ps):
     return np.asarray(points)
 
 labeled_data = []
-for i in range(21): #There are only 21 data points
+for i in range(len(points)): 
     pb_set1 = pb1[i]
     pb_set2 = pb2[i]
     pb_set3 = pb3[i]

@@ -11,6 +11,9 @@ from torch_geometric.nn import GCNConv
 from torch_geometric.datasets import Planetoid
 import torch_geometric.transforms as T
 
+#INPUT SHAPE: (None, 5, 2, 500)
+#NUM CLASSES: 12
+
 # ======================= CNN Function =======================
 def create_3d_cnn(input_shape, num_classes):
     model = models.Sequential([
