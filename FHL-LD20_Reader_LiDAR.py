@@ -11,6 +11,7 @@ import matplotlib.animation as animation
 from scipy.ndimage import gaussian_filter
 import numpy as np
 from sklearn.decomposition import PCA
+import time
 
 pygame.init()
 
@@ -47,7 +48,7 @@ gint = 0
 
 NUM_POINTS = 500
 OUTPUT_BATCH_SIZE = 5
-LOCATION_NAME = "ZANDER_DORM_NORTH"
+LOCATION_NAME = "RADY131-WEST"
 
 
 NOISE_REDUC_ITERS = 500
@@ -75,7 +76,7 @@ def outputPoints(points):
     global output_iter, output_points
     output_points.append(points)
     output_iter += 1
-    if(output_iter == OUTPUT_BATCH_SIZE):
+    if(output_iter >= OUTPUT_BATCH_SIZE):
         #OUTPUT POINTS TO FILE
         with open("labeled_points.csv", 'a') as f:
             for i in range(OUTPUT_BATCH_SIZE):
@@ -84,6 +85,7 @@ def outputPoints(points):
             f.close()
         output_points = []
         output_iter = 0
+        time.sleep(0.1)	
     return
             
 
@@ -96,7 +98,8 @@ def animate(i):
     if(noise_iter >= NOISE_REDUC_ITERS):
         xs, ys = noiseReduction(points)
         points = list(zip(xs, ys))
-        outputPoints(points)
+        
+       # outputPoints(points) #DO NOT COLLECT POINTS FOR NOW!!!!
         points = list(set(points))
         scatter.set_offsets(points)
 

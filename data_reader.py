@@ -4,6 +4,7 @@ import numpy as np
 points = pd.read_csv('labeled_points.csv', sep='\t', header=None, names=["point_batch1", "point_batch2", "point_batch3", "point_batch4", "point_batch5", "Room+Direction"])
 
 print(points.head())
+print(len(points))
 
 pb1 = points['point_batch1']
 pb2 = points['point_batch2']
@@ -57,8 +58,7 @@ for i in range(21): #There are only 21 data points
 
     labeled_data.append((point_batches, labels[i]))
 
-print(labeled_data)
-point_batches, label = labeled_data[0]
-
+point_batches, label = labeled_data[-1]
+print(points['Room+Direction'].unique())
 print(point_batches.shape)
 print(label)
