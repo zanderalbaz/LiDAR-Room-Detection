@@ -116,20 +116,27 @@ def create_3d_cnn(input_shape, num_classes):
 def train_3d_cnn(train_data, test_data, input_shape, num_classes):
     model = create_3d_cnn(input_shape, num_classes)
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-    
     augmented_train_data = augment_data(train_data)
     augmented_test_data = augment_data(test_data)
+    train_instances = []
+    test_instances = []
 
-    print(len(augmented_train_data))
-    train_batches = np.array([batch for batch, _ in augmented_train_data])
-    train_labels = np.array([label for _, label in augmented_train_data])
-    test_batches = np.array([batch for batch, _ in augmented_test_data])
-    test_labels = np.array([label for _, label in augmented_test_data])
+    for batch, label in augmented_train_data:
+        for instance in batch:
+            train_instances.append((instance, label))
+    for batch, label in augmented_test_data:
+        for instance in batch:
+            test_instances.append((instance, label))
+            
+    train_batches = np.array([instance for instance, _ in train_instances])
+    train_labels = np.array([label for _, label in train_instances])
+    test_batches = np.array([instance for instance, _ in test_instances])
+    test_labels = np.array([label for _, label in test_instances])
 
     # Added early stopping to prevent overfitting
-    early_stopping = EarlyStopping(monitor='val_accuracy', patience=5)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5)
 
-    model.fit(train_batches, train_labels, epochs=10, batch_size=8, 
+    model.fit(train_batches, train_labels, epochs=100, batch_size=32, 
               validation_data=(test_batches, test_labels),
               callbacks=[early_stopping])
     model.save("lidar_detection.h5")
