@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from keras.layers import Input, Dense, Reshape, Dropout, Conv1D, MaxPooling1D, Flatten
 from tensorflow.keras import layers, models
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, Reshape, BatchNormalization
@@ -68,28 +69,39 @@ def create_3d_cnn(input_shape, num_classes):
 #     spatial transformation of the input data (Whats most important.)
 # """
 
-def tnet(inputs, num_features):
-    x = Dense(64, activation='relu')(inputs)
-    x = BatchNormalization()(x)
-    x = Dense(128, activation='relu')(x)
-    x = BatchNormalization()(x)
-    x = Dense(256, activation='relu')(x)
-    x = BatchNormalization()(x)
-    transform = Dense(num_features * num_features, kernel_initializer='zeros', bias_initializer=tf.keras.initializers.Constant(np.eye(num_features).flatten()))(x)
-    transform = Reshape((num_features, num_features))(transform)
-    transformed = Multiply()([inputs, transform])
-    return transformed
+from keras.initializers import Constant
 
-def create_pointnet_model(num_points, num_classes):
+def tnet(input_points, num_features):
+    transform = Dense(64, activation='relu')(input_points)
+    transform = Dense(128, activation='relu')(transform)
+    transform = Dense(256, activation='relu')(transform)
+    transform = Dense(512, activation='relu')(transform)
+    transform = Dense(256, activation='relu')(transform)
+    transform = Dense(128, activation='relu')(transform)
+    
+    # Ensure the output size matches num_features * num_features
+    output_size = num_features * num_features
+    transform = Dense(output_size, 
+                      kernel_initializer='zeros', 
+                      bias_initializer=Constant(np.eye(num_features).flatten()))(transform)
+    transform = Reshape((num_features, num_features))(transform)  # Reshape to (num_features, num_features)
+    
+    return transform
+
+def create_pointnet_model(num_points, num_features, num_classes):
     input_points = Input(shape=(num_points, num_features))
     transformed = tnet(input_points, num_features)
     x = Dense(64, activation='relu')(transformed)
+    x = BatchNormalization()(x)
     x = Dense(128, activation='relu')(x)
+    x = BatchNormalization()(x)
     x = Dense(1024, activation='relu')(x)
-    x = MaxPool1D(pool_size=num_points)(x)
+    x = MaxPooling1D(pool_size=num_points)(x)
     x = Flatten()(x)
     x = Dense(512, activation='relu')(x)
+    x = BatchNormalization()(x)
     x = Dense(256, activation='relu')(x)
+    x = BatchNormalization()(x)
     output = Dense(num_classes, activation='softmax')(x)
     model = Model(inputs=input_points, outputs=output)
     return model
@@ -113,4 +125,4 @@ def create_gnn(num_features, hidden_channels, num_classes):
     return GNN()
 
 
-create_3d_cnn(input_shape=(5,2,500), num_classes=12)
+# create_3d_cnn(input_shape=(5,2,500), num_classes=12)
