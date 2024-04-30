@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, Flatten, Dense, Dropout, Reshape, BatchNormalization
+from tensorflow.keras.layers import Conv2D, Flatten, Dense, Dropout, Reshape, BatchNormalization, MaxPooling2D
 from tensorflow.keras.callbacks import EarlyStopping
 
 def normalize_data(data):
@@ -45,7 +45,7 @@ def augment_data(data, noise_std=0.05, transform_scale=0.1):
         augmented_point_batches = []
         for point_set in point_batches:
             augmented_point_set = []
-            for _ in range(10):  # augment each point set 10 times
+            for _ in range(2):  # augment each point set 2 times
                 point_set_reshaped = point_set.reshape((500, 2))  
                 noisy_point_set = point_set_reshaped + np.random.normal(loc=0.0, scale=noise_std, size=point_set_reshaped.shape)
                 transformed_point_set = point_set_reshaped * (1 + np.random.uniform(-transform_scale, transform_scale, size=point_set_reshaped.shape))
@@ -92,33 +92,35 @@ for i in range(len(labeled_data)):
     encoded_label = encoded_labels[i]
     labeled_data_encoded.append((point_batches, encoded_label))
     
-train_data, test_data = train_test_split(labeled_data_encoded, test_size=0.5, random_state=1337, shuffle=False)
-
+train_data, test_data = train_test_split(labeled_data_encoded, test_size=0.5, random_state=17, shuffle=False)
 def create_3d_cnn(input_shape, num_classes): 
     model = Sequential([
-        Reshape((500, 2, 1), input_shape=input_shape), 
-        Conv2D(64, (3, 3), padding="same", activation="relu"),
-        BatchNormalization(),
+        Reshape((100, 10, 1), input_shape=input_shape), 
         Conv2D(32, (3, 3), padding="same", activation="relu"),
         BatchNormalization(),
-        Conv2D(16, (51, 1), activation="relu"),
+        MaxPooling2D(pool_size=(2, 2)), 
+        Conv2D(16, (3, 3), padding="same", activation="relu"),
+        BatchNormalization(),
+        MaxPooling2D(pool_size=(2, 1)),
+        Conv2D(8, (3, 3), padding="same", activation="relu"),
         BatchNormalization(),
         Flatten(),
-        Dense(64, activation="relu"),
+        Dense(32, activation="relu"),
         Dropout(0.5),
         Dense(num_classes, activation="softmax")
     ])
     model.summary()
     return model
 
+
 def train_3d_cnn(train_data, test_data, input_shape, num_classes):
     model = create_3d_cnn(input_shape, num_classes)
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     
-    # Augment train and test data
     augmented_train_data = augment_data(train_data)
     augmented_test_data = augment_data(test_data)
 
+    print(len(augmented_train_data))
     train_batches = np.array([batch for batch, _ in augmented_train_data])
     train_labels = np.array([label for _, label in augmented_train_data])
     test_batches = np.array([batch for batch, _ in augmented_test_data])
@@ -127,7 +129,7 @@ def train_3d_cnn(train_data, test_data, input_shape, num_classes):
     # Added early stopping to prevent overfitting
     early_stopping = EarlyStopping(monitor='val_accuracy', patience=5)
 
-    model.fit(train_batches, train_labels, epochs=100, batch_size=8, 
+    model.fit(train_batches, train_labels, epochs=10, batch_size=8, 
               validation_data=(test_batches, test_labels),
               callbacks=[early_stopping])
     model.save("lidar_detection.h5")
