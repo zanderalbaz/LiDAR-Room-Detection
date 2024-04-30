@@ -63,61 +63,35 @@ def create_3d_cnn(input_shape, num_classes):
     return model
 
 # ======================= PointNet Function =======================
-def tnet(inputs, num_features):
-    # T-Net mini network for PointNet
-    x = layers.Conv1D(64, 1, activation='relu')(inputs)
-    x = layers.BatchNormalization()(x)
-    x = layers.Conv1D(128, 1, activation='relu')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Conv1D(1024, 1, activation='relu')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.GlobalMaxPooling1D()(x)
-    x = layers.Dense(512, activation='relu')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Dense(256, activation='relu')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Dense(num_features * num_features, weights=[tf.zeros([256, num_features * num_features]), tf.eye(num_features).flatten()])(x)
-    init = layers.Reshape((num_features, num_features))(x)
+# """
+#     The sole purpose of the Transformation Network, is to learn an optimal 
+#     spatial transformation of the input data (Whats most important.)
+# """
 
-    return init
+def tnet(inputs, num_features):
+    x = Dense(64, activation='relu')(inputs)
+    x = BatchNormalization()(x)
+    x = Dense(128, activation='relu')(x)
+    x = BatchNormalization()(x)
+    x = Dense(256, activation='relu')(x)
+    x = BatchNormalization()(x)
+    transform = Dense(num_features * num_features, kernel_initializer='zeros', bias_initializer=tf.keras.initializers.Constant(np.eye(num_features).flatten()))(x)
+    transform = Reshape((num_features, num_features))(transform)
+    transformed = Multiply()([inputs, transform])
+    return transformed
 
 def create_pointnet_model(num_points, num_classes):
-    input_points = layers.Input(shape=(num_points, 3))
-
-    # Input Transformer
-    x = tnet(input_points, 3)
-    point_cloud_transformed = layers.Dot(axes=(2, 1))([input_points, x])
-
-    # MLP
-    x = layers.Conv1D(64, 1, activation='relu')(point_cloud_transformed)
-    x = layers.BatchNormalization()(x)
-    x = layers.Conv1D(128, 1, activation='relu')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Conv1D(1024, 1, activation='relu')(x)
-    x = layers.BatchNormalization()(x)
-
-    # Global Features
-    global_features = layers.GlobalMaxPooling1D()(x)
-
-    # MLP on global features
-    x = layers.Dense(512, activation='relu')(global_features)
-    x = layers.BatchNormalization()(x)
-    x = layers.Dense(256, activation='relu')(x)
-    x = layers.BatchNormalization()(x)
-
-    # Feature Transformer
-    f_transform = tnet(x, 256)
-    x = layers.Dot(axes=(2, 1))([global_features, f_transform])
-    x = layers.Dense(256, activation='relu')(x)
-
-    # Segmentation layer
-    x = layers.Dense(128, activation='relu')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Dense(num_classes, activation='softmax')(x)
-
-    # Create model
-    model = models.Model(inputs=input_points, outputs=x)
-
+    input_points = Input(shape=(num_points, num_features))
+    transformed = tnet(input_points, num_features)
+    x = Dense(64, activation='relu')(transformed)
+    x = Dense(128, activation='relu')(x)
+    x = Dense(1024, activation='relu')(x)
+    x = MaxPool1D(pool_size=num_points)(x)
+    x = Flatten()(x)
+    x = Dense(512, activation='relu')(x)
+    x = Dense(256, activation='relu')(x)
+    output = Dense(num_classes, activation='softmax')(x)
+    model = Model(inputs=input_points, outputs=output)
     return model
 
 # ======================= GNN Function =======================
