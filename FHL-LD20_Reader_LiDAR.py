@@ -12,6 +12,9 @@ from scipy.ndimage import gaussian_filter
 import numpy as np
 from sklearn.decomposition import PCA
 import time
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from tensorflow.keras.models import load_model
 
 pygame.init()
 
@@ -38,9 +41,7 @@ signal_strength = 0
 end_angle = 0
 timestamp = 0
 
-
-
-MEASURE_FREQ = 4000 #samples / second
+MEASURE_FREQ = 4000  # samples / second
 
 gdist = 0
 gangle = 0
@@ -50,34 +51,40 @@ NUM_POINTS = 500
 OUTPUT_BATCH_SIZE = 5
 LOCATION_NAME = "RADY131-WEST"
 
-
 NOISE_REDUC_ITERS = 500
 noise_iter = 0
 output_iter = 0
 output_points = []
+predicted_class = ""
 
 # Create figure for animation
 fig = plt.figure()
-ax = fig.add_subplot(1,1,1)
+ax = fig.add_subplot(1, 1, 1)
 
-#Create zero vector for x and y points
+# Create zero vector for x and y points
 x_points = [0] * NUM_POINTS
 y_points = [0] * NUM_POINTS
-
-
 
 scatter = ax.scatter([], [], s=10)
 AX_DIM = 800
 ax.set_ylim([-AX_DIM, AX_DIM])
 ax.set_xlim([-AX_DIM, AX_DIM])
 
+model = load_model("lidar_detection.h5") 
+
+
+def normalize_data(data):
+    max_val = np.max(data)
+    min_val = np.min(data)
+    normalized_data = 2 * ((data - min_val) / (max_val - min_val)) - 1
+    return normalized_data
 
 def outputPoints(points):
     global output_iter, output_points
     output_points.append(points)
     output_iter += 1
     if(output_iter >= OUTPUT_BATCH_SIZE):
-        #OUTPUT POINTS TO FILE
+        # OUTPUT POINTS TO FILE
         with open("labeled_points.csv", 'a') as f:
             for i in range(OUTPUT_BATCH_SIZE):
                 f.write(str(output_points[i]) + "\t")
@@ -87,25 +94,41 @@ def outputPoints(points):
         output_iter = 0
         time.sleep(0.1)
     return
-            
+
 
 def polarToCart(R, deg):
     return ((R*math.cos((deg*math.pi)/180)), R*math.sin((deg*math.pi)/180))
 
 def animate(i):
-    global x_points, y_points, noise_iter
-    points = list(zip(x_points, y_points))
-    if(noise_iter >= NOISE_REDUC_ITERS):
-        xs, ys = noiseReduction(points)
-        points = list(zip(xs, ys))
-        
-       # outputPoints(points) #DO NOT COLLECT POINTS FOR NOW!!!!
-        points = list(set(points))
-        scatter.set_offsets(points)
+    global x_points, y_points, noise_iter, predicted_class
+    encoder_mapping = {0: 'HALLWAY1-EAST', 1: 'HALLWAY1-NORTH', 2: 'HALLWAY1-SOUTH', 3: 'HALLWAY1-WEST',
+                       4: 'RADY129-EAST', 5: 'RADY129-NORTH', 6: 'RADY129-SOUTH', 7: 'RADY129-WEST',
+                       8: 'RADY131-EAST', 9: 'RADY131-NORTH', 10: 'RADY131-SOUTH', 11: 'RADY131-WEST'}
+
+    if noise_iter >= NOISE_REDUC_ITERS:
+        batch_data = []
+        for _ in range(OUTPUT_BATCH_SIZE):
+            points = list(zip(x_points, y_points))
+            points = list(set(points))
+            batch_data.append(points)
+
+        batch = np.array(batch_data)
+        batch = normalize_data(batch)
+        batch = batch.reshape(1, OUTPUT_BATCH_SIZE, NUM_POINTS, 2)
+
+        predicted_probs = model.predict(batch[0])
+        predicted_label_index = np.argmax(predicted_probs)
+        predicted_class = encoder_mapping[predicted_label_index]        
+        scatter.set_offsets(batch_data[-1])
 
     return scatter,
+
+
+
+
+
 def pygameDisplay():
-    global gint, gdist
+    global gint, gdist, predicted_class
     try:
         while True:
             events = pygame.event.get()
@@ -127,8 +150,9 @@ def pygameDisplay():
             screen.blit(text_surface, (20, 140))
             text_surface = font.render(f"Timestamp: {timestamp} ms", True, BLACK)
             screen.blit(text_surface, (20, 170))
-         
-            
+            text_surface = font.render(f"Prediction: {predicted_class}", True, BLACK)
+            screen.blit(text_surface, (20, 200))
+
             pygame.display.update()
     except KeyboardInterrupt:
         pygame.display.quit()
@@ -137,10 +161,10 @@ def pygameDisplay():
 
 
 def noiseReduction(points, gaussian_sigma=1):
-    #points = gaussian_filter(points, gaussian_sigma)
-    pca = PCA(n_components=2) 
-    
-    for i, (x, y) in enumerate(points): #quantize points to bins of 10 after processing
+    # points = gaussian_filter(points, gaussian_sigma)
+    pca = PCA(n_components=2)
+
+    for i, (x, y) in enumerate(points):  # quantize points to bins of 10 after processing
         x = int(x)
         x = x - (x % 5)
         x_points[i] = x
@@ -151,25 +175,19 @@ def noiseReduction(points, gaussian_sigma=1):
     return x_points, y_points
 
 
-
-## ALL READING AND PREPROCESSING DONE IN REFERENCE TO:
-##
-##   https://wiki.youyeetoo.com/en/Lidar/LD20
-##
-## 
 def collectData():
     global radar_speed, starting_angle, distance, signal_strength, end_angle, timestamp
     global x_points, y_points, gint, gdist, gangle
     global noise_iter
     output_points = []
-    
+
     try:
         while True:
             distances = []
             intensity = []
             angles = []
             start_byte = lidar_usb.read(1)
-            if start_byte == b'\x54': # Predefined starting byte.
+            if start_byte == b'\x54':  # Predefined starting byte.
                 length = int.from_bytes(lidar_usb.read(1), 'little')
                 packet = lidar_usb.read(7 + (3*length))
 
@@ -186,11 +204,9 @@ def collectData():
                 timestamp = int.from_bytes(packet[-3:-1], 'little')
                 crc = packet[-1]
                 step = (end_angle - starting_angle)/(length-1)
-                
-
 
                 diff = (end_angle - starting_angle + 360) % 360
-                if diff <= radar_speed * length / MEASURE_FREQ *1.5: 
+                if diff <= radar_speed * length / MEASURE_FREQ *1.5:
                     for i in range(length-1):
                         angle = starting_angle + step*i
                         while(angle >= 360):
@@ -205,12 +221,13 @@ def collectData():
                             gdist = distances[i]
                             gangle = angles[i]
                             gint = intensity[i]
-               
+
     except KeyboardInterrupt:
         lidar_usb.close()
         pygame.display.quit()
         pygame.quit()
         sys.exit()
+
 
 data_thread = threading.Thread(target=collectData)
 data_thread.start()
@@ -218,7 +235,7 @@ data_thread.start()
 pygame_thread = threading.Thread(target=pygameDisplay)
 pygame_thread.start()
 
-ani = animation.FuncAnimation(fig, animate, interval=50, blit=True)
+ani = animation.FuncAnimation(fig, animate, interval=100, blit=True)
 plt.show()
 
 data_thread.join()
