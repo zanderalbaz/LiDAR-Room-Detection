@@ -1,56 +1,60 @@
 # CNN & PointNet
 import tensorflow as tf
-import tensorflow.keras import layers, models
+from tensorflow.keras import layers, models
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, Reshape, BatchNormalization
 
-# GNN
-import torch
-import torch.nn.functional as F
-from torch_geometric.nn import GCNConv
-from torch_geometric.datasets import Planetoid
-import torch_geometric.transforms as T
+
+# # GNN
+# import torch
+# import torch.nn.functional as F
+# from torch_geometric.nn import GCNConv
+# from torch_geometric.datasets import Planetoid
+# import torch_geometric.transforms as T
 
 #INPUT SHAPE: (None, 5, 2, 500)
 #NUM CLASSES: 12
 
-# ======================= CNN Function =======================
-def create_cnn(input_shape, num_classes): 
+# ======================= CNN Function =======================    
+def create_3d_cnn(input_shape, num_classes): 
     model = Sequential([
-            Reshape((5, 2, 500, 1), input_shape=(5, 2, 500)),  # Reshape input to match the desired input size (5, 2, 500)
-            Conv2D(10, (2, 5), activation="relu"),
+            Reshape((5, 2, 500), input_shape=input_shape),  # Ensure input shape is correct
+            Conv2D(40, (2, 2), padding="same", activation="relu"),
+            Conv2D(20, (2, 2), padding="same", activation="relu"),
             BatchNormalization(),
-            MaxPooling2D((2, 2)),
+            MaxPooling2D((1, 2)),  # Pool only along the 500 dimension
     ])
-    assert model.output_shape == (None, 2, 250, 10)
+    assert model.output_shape == (None, 5, 1, 20)
 
     model.add(Conv2D(25, (2, 5), activation="relu"))
-    assert model.output_shape == (None, 1, 125, 25)
+    assert model.output_shape == (None, 4, 1, 25)
     model.add(BatchNormalization())
     model.add(Dropout(rate=0.5))
-    model.add(MaxPooling2D((2, 2), padding="same"))
+    model.add(MaxPooling2D((1, 2), padding="same"))
 
     model.add(Conv2D(50, (2, 5), activation="relu"))
-    assert model.output_shape == (None, 1, 63, 50)
+    assert model.output_shape == (None, 3, 1, 50)
     model.add(BatchNormalization())
     model.add(Dropout(rate=0.5))
-    model.add(MaxPooling2D((2, 2), padding="same"))
+    model.add(MaxPooling2D((1, 2), padding="same"))
 
     model.add(Conv2D(50, (2, 5), activation="relu"))
-    assert model.output_shape == (None, 1, 32, 50)
+    assert model.output_shape == (None, 2, 1, 50)
     model.add(BatchNormalization())
-    model.add(MaxPooling2D((2, 2)))
+    model.add(MaxPooling2D((1, 2)))
 
     model.add(Conv2D(100, (1, 5), activation="relu"))  
-    assert model.output_shape == (None, 1, 16, 100)
+    assert model.output_shape == (None, 2, 1, 100)
     model.add(BatchNormalization())
 
     model.add(Flatten())
-    assert model.output_shape == (None, 1600) 
+    assert model.output_shape == (None, 200)
 
     model.add(Dense(100, activation="relu"))
     assert model.output_shape == (None, 100)
 
-    model.add(Dense(12, activation="softmax")) # We use softmax to identify the most likely classification
-    assert model.output_shape == (None, 12) # We have 12 total labels
+    model.add(Dense(num_classes, activation="softmax")) # We use softmax to identify the most likely classification
+    assert model.output_shape == (None, num_classes) # We have 12 total labels (3 rooms + 4 cardinal directions each)
 
     model.summary()
 
@@ -131,3 +135,6 @@ def create_gnn(num_features, hidden_channels, num_classes):
             return F.log_softmax(x, dim=1)
 
     return GNN()
+
+
+create_3d_cnn(input_shape=(5,2,500), num_classes=12)
