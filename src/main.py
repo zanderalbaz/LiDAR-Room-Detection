@@ -7,6 +7,15 @@ import numpy as np
 from torch_geometric.datasets import Planetoid
 from sklearn.model_selection import train_test_split
 
+def load_and_preprocess_data(filepath):
+    data = pd.read_csv(filepath)
+    # Assuming each row in CSV is a point cloud flattened with corresponding label at the end
+    labels = data.iloc[:, -1]
+    points = data.iloc[:, :-1].values
+    points = points.reshape(-1, 500, 2)
+    points = points / np.max(np.abs(points), axis=0)
+    return points, labels
+
 def load_data(filepath):
     data = pd.read_csv(filepath)
     X = data[['X']].values.reshape(-1, *(5, 2, 500, 1)) # <----- Input Shape 
@@ -54,9 +63,23 @@ def cnn():
 
     # INput Shape: (x,y,z,maybe intensity?)
 
-def pointnet():
-    # Code goes here...
-    pass
+def pointNet():
+    # Load and preprocess data
+    points, labels = load_and_preprocess_data('labeled_points.csv')
+    
+    # Split data into train and test sets
+    points_train, points_test, labels_train, labels_test = train_test_split(points, labels, test_size=0.2, random_state=42)
+    
+    # Create PointNet model
+    model = create_pointnet_model(num_points=500, num_features=2, num_classes=12)
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    
+    # Train the model
+    model.fit(points_train, labels_train, epochs=10, batch_size=32, validation_split=0.2)
+    
+    # Evaluate the model
+    test_loss, test_acc = model.evaluate(points_test, labels_test)
+    print(f"Test Accuracy: {test_acc:.4f}, Test Loss: {test_loss:.4f}")
 
 # =============================== Graph Neural Network ===============================
 # """
@@ -104,8 +127,8 @@ def gnn():
 
 # =============================== Main ===============================
 def main():
-    cnn()
-    # pointnet()
+    # cnn()
+    pointNet()
     # gnn()
 
 if __name__ == "__main__":
