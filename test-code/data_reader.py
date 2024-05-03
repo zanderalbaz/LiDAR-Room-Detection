@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+# THIS WAS THE OLD DATA READER BEFORE WE PROCESSED OUR 2x500 TENSORS INTO 80x80 TENSORS
 points = pd.read_csv('labeled_points.csv', sep='\t', header=None, names=["point_batch1", "point_batch2", "point_batch3", "point_batch4", "point_batch5", "Room+Direction"])
 
 print(points.head())
@@ -12,7 +13,7 @@ pb3 = points['point_batch3']
 pb4 = points['point_batch4']
 pb5 = points['point_batch5']
 
-def processSet(pb_set):
+def processSet(pb_set): #csv processing
     pb_set = pb_set.replace('[(', '')
     pb_set = pb_set.replace(')]', '')
     return pb_set.split('), (')
@@ -20,7 +21,7 @@ def processSet(pb_set):
 def processPoints(p_list):
     points = []
     for ps in p_list:
-        for p in processPoints_(ps):
+        for p in processPoints_(ps): #helper
             points.append(p)
     return np.asarray(points)
 

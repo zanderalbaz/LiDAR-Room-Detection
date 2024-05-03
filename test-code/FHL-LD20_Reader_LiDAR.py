@@ -16,10 +16,14 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.models import load_model
 
+
+
+#NOTE: FOR THIS APPLICATION TO RUN YOU MUST:
+# 1. 
 pygame.init()
 
 font = pygame.font.SysFont("calibri", 24)
-
+#Pygame setup stuffs
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 400
 
@@ -31,6 +35,8 @@ pygame.display.set_caption("LiDAR Data")
 slider = Slider(screen, 200, 200, 800, 40, min=0, max=1, step=0.01)
 output = TextBox(screen, 475, 200, 50, 50, fontSize=30)
 
+
+#Serial setup
 lidar_usb = Serial('COM7', 230400, timeout=1)
 
 # Global variables for data
@@ -41,23 +47,27 @@ signal_strength = 0
 end_angle = 0
 timestamp = 0
 
-MEASURE_FREQ = 4000  # samples / second
-
 gdist = 0
 gangle = 0
 gint = 0
 
+MEASURE_FREQ = 4000  # samples / second
+
+
+#DATA COLLECTION GLOBALS
 NUM_POINTS = 500
 OUTPUT_BATCH_SIZE = 5
 LOCATION_NAME = "RADY131"
-
 NOISE_REDUC_ITERS = 500
+COLLECT_DATA = False
+
+#Other useful globals
 noise_iter = 0
 output_iter = 0
 output_points = []
 predicted_class = ""
 
-# Create figure for animation
+#SETUP PLOT ANIMATION
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 
@@ -70,16 +80,19 @@ AX_DIM = 800
 ax.set_ylim([-AX_DIM, AX_DIM])
 ax.set_xlim([-AX_DIM, AX_DIM])
 
+#load model for classification
 model = load_model("lidar_detection.h5") 
 
 
-def normalize_data(data):
+def normalize_data(data): #apply min-max scaling (formula from sklearn preprocessing)
     max_val = np.max(data)
     min_val = np.min(data)
     normalized_data = 2 * ((data - min_val) / (max_val - min_val)) - 1
     return normalized_data
 
-def outputPoints(points):
+def outputPoints(points): #Write points to csv (tab delineated since we have commas in our data)
+    if(COLLECT_DATA == False):
+        return
     global output_iter, output_points
     output_points.append(points)
     output_iter += 1
@@ -96,10 +109,10 @@ def outputPoints(points):
     return
 
 
-def polarToCart(R, deg):
+def polarToCart(R, deg): #Transform polar coordinates from sensor to cartesian coordinates for tensor
     return ((R*math.cos((deg*math.pi)/180)), R*math.sin((deg*math.pi)/180))
 
-def animate(i):
+def animate(i): #Animation function
     global x_points, y_points, noise_iter, predicted_class
     encoder_mapping = {0: 'HALLWAY1-EAST', 1: 'HALLWAY1-NORTH', 2: 'HALLWAY1-SOUTH', 3: 'HALLWAY1-WEST',
                        4: 'RADY129-EAST', 5: 'RADY129-NORTH', 6: 'RADY129-SOUTH', 7: 'RADY129-WEST',
@@ -114,12 +127,12 @@ def animate(i):
 
         batch = np.array(batch_data)
         batch = normalize_data(batch)
-        batch = batch.reshape(1, OUTPUT_BATCH_SIZE, NUM_POINTS, 2)
+        batch = batch.reshape(1, OUTPUT_BATCH_SIZE, NUM_POINTS, 2) #reshape data for old CNN (demo_cnn)
 
         predicted_probs = model.predict(batch[0])
         predicted_label_index = np.argmax(predicted_probs)
-        predicted_class = encoder_mapping[predicted_label_index]        
-        scatter.set_offsets(batch_data[-1])
+        predicted_class = encoder_mapping[predicted_label_index]    #set predicted label for display    
+        scatter.set_offsets(batch_data[-1]) #update animation
 
     return scatter,
 
@@ -127,7 +140,7 @@ def animate(i):
 
 
 
-def pygameDisplay():
+def pygameDisplay(): #pygame display thread
     global gint, gdist, predicted_class
     try:
         while True:
@@ -160,11 +173,11 @@ def pygameDisplay():
         sys.exit()
 
 
-def noiseReduction(points, gaussian_sigma=1):
+def noiseReduction(points, gaussian_sigma=1): #Did not end up using this for data collection (old data requirements)
     # points = gaussian_filter(points, gaussian_sigma)
-    pca = PCA(n_components=2)
+    pca = PCA(n_components=2) #messing with PCA (did not work)
 
-    for i, (x, y) in enumerate(points):  # quantize points to bins of 10 after processing
+    for i, (x, y) in enumerate(points):  # quantize points to bins of 5 after processing
         x = int(x)
         x = x - (x % 5)
         x_points[i] = x
@@ -175,7 +188,7 @@ def noiseReduction(points, gaussian_sigma=1):
     return x_points, y_points
 
 
-def collectData():
+def collectData(): #Data collection thread
     global radar_speed, starting_angle, distance, signal_strength, end_angle, timestamp
     global x_points, y_points, gint, gdist, gangle
     global noise_iter
@@ -186,7 +199,8 @@ def collectData():
             distances = []
             intensity = []
             angles = []
-            start_byte = lidar_usb.read(1)
+            start_byte = lidar_usb.read(1) #Read until we find a packet
+            #Parse packet
             if start_byte == b'\x54':  # Predefined starting byte.
                 length = int.from_bytes(lidar_usb.read(1), 'little')
                 packet = lidar_usb.read(7 + (3*length))
@@ -202,17 +216,17 @@ def collectData():
                     intensity.append(signal_strength)
                 end_angle = round(int.from_bytes(packet[-5:-3], 'little')* 0.01, 2)
                 timestamp = int.from_bytes(packet[-3:-1], 'little')
-                crc = packet[-1]
-                step = (end_angle - starting_angle)/(length-1)
+                crc = packet[-1] #Did not do CRC check (data is not the most reliable)
+                step = (end_angle - starting_angle)/(length-1) #get distance away from each point read
 
                 diff = (end_angle - starting_angle + 360) % 360
-                if diff <= radar_speed * length / MEASURE_FREQ *1.5:
+                if diff <= radar_speed * length / MEASURE_FREQ *1.5: #drop data that doesn't make sense (from sensor source code)
                     for i in range(length-1):
-                        angle = starting_angle + step*i
-                        while(angle >= 360):
+                        angle = starting_angle + step*i  #use step to generate correct angle
+                        while(angle >= 360): #does not matter, but it was in sensor source code
                             angle -= 360
                         angles.append(angle)
-                        if(intensity[i] > 200 and distances[i] > 10 and distances[i] <= 8000):
+                        if(intensity[i] > 200 and distances[i] > 10 and distances[i] <= 8000): #ensure point is a good point (intensity), and make sure it fits into the max range
                             x, y = polarToCart(distances[i]*0.1, angles[i])
                             x_points = x_points[1:] + [x]
                             y_points = y_points[1:] + [y]
@@ -222,13 +236,13 @@ def collectData():
                             gangle = angles[i]
                             gint = intensity[i]
 
-    except KeyboardInterrupt:
+    except KeyboardInterrupt: #Quit displays (MAKE SURE TO CLOSE PROGRAM OR CTRL+C, otherwise pygame wont close)
         lidar_usb.close()
         pygame.display.quit()
         pygame.quit()
         sys.exit()
 
-
+#Start threads
 data_thread = threading.Thread(target=collectData)
 data_thread.start()
 
@@ -238,5 +252,6 @@ pygame_thread.start()
 ani = animation.FuncAnimation(fig, animate, interval=100, blit=True)
 plt.show()
 
+#Join threads
 data_thread.join()
 pygame_thread.join()

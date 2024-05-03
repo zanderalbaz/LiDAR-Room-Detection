@@ -7,14 +7,14 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, Flatten, Dense, Dropout, Reshape, BatchNormalization, MaxPooling2D
 from tensorflow.keras.callbacks import EarlyStopping
 from keras.optimizers import SGD, Adam
-
-def normalize_data(data):
+#THIS WAS OUT DEMO CNN FOR THE FINALS PERIOD
+def normalize_data(data): #min max scaling
     max_val = np.max(data)
     min_val = np.min(data)
     normalized_data = 2 * ((data - min_val) / (max_val - min_val)) - 1
     return normalized_data
 
-def processSet(pb_set):
+def processSet(pb_set): #csv processing
     pb_set = pb_set.replace('[(', '')
     pb_set = pb_set.replace(')]', '')
     return pb_set.split('), (')
@@ -22,7 +22,7 @@ def processSet(pb_set):
 def processPoints(p_list):
     points = []
     for ps in p_list:
-        points.append(processPoints_(ps))
+        points.append(processPoints_(ps)) #helper
     return np.asarray(points)
 
 def processPoints_(ps):
@@ -40,17 +40,20 @@ def processPoints_(ps):
     points.append(np.array(ys))
     return np.asarray(points)
 
-def augment_data(data, noise_std=0.05, transform_scale=0.1):
+def augment_data(data, noise_std=0.05, transform_scale=0.1): #augment data by shifting and adding noise
     augmented_data = []
     for point_batches, label in data:
         augmented_point_batches = []
         for point_set in point_batches:
             augmented_point_set = []
             for _ in range(2):  # augment each point set 2 times
-                point_set_reshaped = point_set.reshape((500, 2))  
+                point_set_reshaped = point_set.reshape((500, 2))  #reshape from 2x500 to 500x2 
+                #Add noise in a normal distribution 
                 noisy_point_set = point_set_reshaped + np.random.normal(loc=0.0, scale=noise_std, size=point_set_reshaped.shape)
+                #scale by some small factor randomly
                 transformed_point_set = point_set_reshaped * (1 + np.random.uniform(-transform_scale, transform_scale, size=point_set_reshaped.shape))
                 
+                #Save points in augmented set
                 augmented_point_set.append(normalize_data(noisy_point_set))  
                 augmented_point_set.append(normalize_data(transformed_point_set)) 
             
@@ -93,8 +96,8 @@ for i in range(len(labeled_data)):
     encoded_label = encoded_labels[i]
     labeled_data_encoded.append((point_batches, encoded_label))
     
-train_data, test_data = train_test_split(labeled_data_encoded, test_size=0.41, random_state=17, shuffle=False)
-#Tried: 
+train_data, test_data = train_test_split(labeled_data_encoded, test_size=0.41, random_state=17, shuffle=False) #41% test split | false suffle and random state for re-producable results
+#Tried more complex models with old data, but they seemed  to yield poor results (no better than chance)
 def create_3d_cnn(input_shape, num_classes): 
     model = Sequential([
         Reshape((100, 10, 1), input_shape=input_shape), 
