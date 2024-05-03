@@ -2,12 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import random
-points = pd.read_csv('labeled_points.csv', sep='\t', header=None, names=["point_batch1", "point_batch2", "point_batch3", "point_batch4", "point_batch5", "Room+Direction"])
 
-print(points.head())
-
-
-def processSet(pb_set):
+def processSet(pb_set): #Clean up the points from CSV 
     pb_set = pb_set.replace('[(', '')
     pb_set = pb_set.replace(')]', '')
     return pb_set.split('), (')
@@ -41,12 +37,6 @@ def processPoints_(ps): #process points to make point tensors smaller
     return np.asarray(points)
 
 
-
-
-tensor_labels = []
-point_tensors = []
-labels = points["Room+Direction"]
-
 def pointsToTensors():
     pb1 = points['point_batch1']
     pb2 = points['point_batch2']
@@ -67,19 +57,19 @@ def pointsToTensors():
         points4 = processSet(pb_set4)
         points5 = processSet(pb_set5)
 
-        points_list = [points1]
+        points_list = [points1] #realize that it takes 12-13 hours to generate 10000 images, so we only generate 1800ish
         pt_sets = processPoints(points_list)
-        label = labels[i]
+        label = labels[i] # get the label for each point set
         for pts in pt_sets:
-            point_tensor = np.zeros((160, 160))
-            for pt in pts:
+            point_tensor = np.zeros((160, 160)) #create tensor
+            for pt in pts: #populate lidar points in tensor
                 x, y = pt
                 x = int(x)
                 y = int(y)
                 point_tensor[x, y] = 1
             point_tensors.append(point_tensor)
             tensor_labels.append(label)
-    return point_tensors, tensor_labels
+    return point_tensors, tensor_labels #return each point set as a tensor, with a label
         
         
 def outputPointTensorsAsImages():
@@ -89,16 +79,20 @@ def outputPointTensorsAsImages():
         label_counts[label] = 1
     point_tensors, tensor_labels = pointsToTensors()
     for i in range(len(tensor_labels)):
-        if i % 100 == 0:
+        if i % 100 == 0: #Status print 
             print(i)
-        label = tensor_labels[i]
-        plt.imshow(point_tensors[i], cmap="Greys")
-        plt.axis('off')
-        plt.savefig(f"point_images/{label}/{label_counts[label]:04}.jpg",  bbox_inches='tight', pad_inches=0)
-        label_counts[label] += 1
+        label = tensor_labels[i] #get tensor label
+        plt.imshow(point_tensors[i], cmap="Greys") #turn tensor into image
+        plt.axis('off') #isolate image
+        plt.savefig(f"point_images/{label}/{label_counts[label]:04}.jpg",  bbox_inches='tight', pad_inches=0) #output image to correct folder
+        label_counts[label] += 1 #increment label count (so we dont overwrite images)
 
 if __name__ == '__main__':
-    outputPointTensorsAsImages()
+    points = pd.read_csv('labeled_points.csv', sep='\t', header=None, names=["point_batch1", "point_batch2", "point_batch3", "point_batch4", "point_batch5", "Room+Direction"])
+    tensor_labels = []
+    point_tensors = []
+    labels = points["Room+Direction"]
+    outputPointTensorsAsImages() #Process Points into Images
 
 
 
