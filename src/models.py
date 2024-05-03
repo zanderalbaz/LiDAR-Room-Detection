@@ -6,6 +6,7 @@ from keras.layers import Input, Dense, Reshape, Dropout, Conv1D, MaxPooling1D, F
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import layers, models
 from tensorflow.keras.models import Sequential
+from tensorflow.keras.regularizers import l2
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, Reshape, BatchNormalization
 
 
@@ -41,6 +42,7 @@ def create_cnn(input_shape, num_classes):
         MaxPooling2D((2, 2)),
 
         Conv2D(256, (3, 3), padding='same', activation='relu'),
+        Dropout(0.5),
         BatchNormalization(),
         MaxPooling2D((2, 2)),
 
@@ -51,14 +53,13 @@ def create_cnn(input_shape, num_classes):
         Flatten(),
 
         Dense(512, activation='relu'),
-        Dropout(0.5),
         BatchNormalization(),
 
-        Dense(num_classes, activation='softmax')
+        Dense(num_classes, activation='softmax', kernel_regularizer=l2(0.01))
     ])
 
     model.summary()
-    model.compile(optimizer=Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer=Adam(learning_rate=0.0001), loss='categorical_crossentropy', metrics=['accuracy'])
 
     return model
 

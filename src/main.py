@@ -1,6 +1,7 @@
 from models import create_3d_cnn
 from models import create_pointnet_model
 from models import create_gnn
+from models import create_cnn
 import torch
 import pandas as pd
 import numpy as np
@@ -10,6 +11,7 @@ from sklearn.preprocessing import LabelEncoder
 from torch_geometric.datasets import Planetoid
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 def normalize_data(data):
     max_val = np.max(data)
@@ -117,47 +119,39 @@ def load_data(filepath):
 #     match the voxel grids dimensions (depth, heigh, width, channels)
 # """
 def mainCNN():
-    train_datagen = ImageDataGenerator(
-    rescale=1./255,
-    rotation_range=20,
-    width_shift_range=0.2,
-    height_shift_range=0.2,
-    shear_range=0.2,
-    zoom_range=0.2,
-    horizontal_flip=True,
-    fill_mode='nearest'
-    )
+    datagen = ImageDataGenerator(validation_split=0.2, rescale=1./255)
 
-    validation_datagen = ImageDataGenerator(rescale=1./255)
-
-    train_generator = train_datagen.flow_from_directory(
-    'training path',  # Need to update this with /traing-data/
+    train_generator = datagen.flow_from_directory(
+    'point_images',
     target_size=(160, 160),
-    batch_size=32,
+    batch_size=8,
     color_mode='grayscale',
-    class_mode='categorical'
+    class_mode='categorical',
+    subset='training'
     )
 
-    validation_generator = validation_datagen.flow_from_directory(
-        'validation path',  # Need to update this with /testing(validation)-data/
-        target_size=(160, 160),
-        batch_size=32,
-        color_mode='grayscale',
-        class_mode='categorical'
+    val_generator = datagen.flow_from_directory(
+    'point_images',
+    target_size=(160, 160),
+    batch_size=8,
+    color_mode='grayscale',
+    class_mode='categorical',
+    subset='training'
     )
+
     input_shape = (160, 160, 1)  # Since we are using grayscale we will use 1 channel
-    num_classes = 4
+    num_classes = 7
 
-    model = build_advanced_model(input_shape, num_classes)
+    model = create_cnn(input_shape, num_classes)
 
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=2, min_lr=0.00001, verbose=1)
-    early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1)
+    # reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=10, min_lr=0.00001, verbose=1)
+    # early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
 
-    history = model.fit(
+    model.fit(
         train_generator,
-        epochs=10,
-        validation_data=validation_generator,
-        callbacks=[reduce_lr, early_stopping]
+        epochs=30,
+        validation_data=val_generator,
+        # callbacks=[reduce_lr, early_stopping]
     )
 
 def cnn():
