@@ -20,25 +20,35 @@ def processSet(pb_set):
 def processPoints(p_list):
     points = []
     for ps in p_list:
-        points.append(processPoints_(ps))
+        for p in processPoints_(ps):
+            points.append(p)
     return np.asarray(points)
 
 def processPoints_(ps):
-    xs = []
-    ys = []
+
+    points = []
     for point in ps:
         p = point.split(', ')
-        x = p[0]
-        xs.append(int(float(x))) #convert to float then int to catch points that were not quantized
-        y = p[1]
-        ys.append(int(float(y))) 
+        x = int(float(p[0])) #convert to float then int to convert string to int
+        x = x - (x % 10) #bin points into intervals of 10
+        x = x + 800 #make everything positive
+        x = x / 10 #reduce maximum tensor size from 800x800 to 80x80
+        #do same to y
+        y = int(float(p[1]))
+        y = y - (y % 10)
+        y = y + 800
+        y = y / 10
         
-    points = []
-    points.append(np.array(xs))
-    points.append(np.array(ys))
+        points.append((x,y))
+    
+    points = list(set(points))
     return np.asarray(points)
 
-labeled_data = []
+
+
+
+
+point_tensors = []
 for i in range(len(points)): 
     pb_set1 = pb1[i]
     pb_set2 = pb2[i]
@@ -53,12 +63,25 @@ for i in range(len(points)):
     points5 = processSet(pb_set5)
 
     points_list = [points1, points2, points3, points4, points5]
-    point_batches = processPoints(points_list)
-    labels = points["Room+Direction"]
+    pts = processPoints(points_list)
 
-    labeled_data.append((point_batches, labels[i]))
+    point_tensor = np.zeros((160, 160))
+    for pt in pts:
+        x, y = pt
+        x = int(x)
+        y = int(y)
+        point_tensor[x, y] = 1
+    point_tensors.append(point_tensor)
+    
+    
+labels = points["Room+Direction"]
 
-point_batches, label = labeled_data[-1]
-print(points['Room+Direction'].unique())
-print(point_batches.shape)
-print(label)
+print(point_tensors)
+print(labels)
+print(len(point_tensors))
+print(len(labels))
+
+# point_batches, label = labeled_data[-1]
+# print(points['Room+Direction'].unique())
+# print(point_batches.shape)
+# print(label)

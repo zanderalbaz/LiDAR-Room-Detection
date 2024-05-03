@@ -92,15 +92,17 @@ for i in range(len(labeled_data)):
     encoded_label = encoded_labels[i]
     labeled_data_encoded.append((point_batches, encoded_label))
     
-train_data, test_data = train_test_split(labeled_data_encoded, test_size=0.5, random_state=17, shuffle=False)
+train_data, test_data = train_test_split(labeled_data_encoded, test_size=0.4, random_state=17, shuffle=False)
 def create_3d_cnn(input_shape, num_classes): 
     model = Sequential([
         Reshape((100, 10, 1), input_shape=input_shape), 
         Conv2D(32, (3, 3), padding="same", activation="relu"),
         BatchNormalization(),
+        Dropout(0.5),
         MaxPooling2D(pool_size=(2, 2)), 
         Conv2D(16, (3, 3), padding="same", activation="relu"),
         BatchNormalization(),
+        Dropout(0.5),
         MaxPooling2D(pool_size=(2, 1)),
         Conv2D(8, (3, 3), padding="same", activation="relu"),
         BatchNormalization(),
@@ -136,7 +138,7 @@ def train_3d_cnn(train_data, test_data, input_shape, num_classes):
     # Added early stopping to prevent overfitting
     early_stopping = EarlyStopping(monitor='val_loss', patience=5)
 
-    model.fit(train_batches, train_labels, epochs=100, batch_size=32, 
+    model.fit(train_batches, train_labels, epochs=100, batch_size=64, 
               validation_data=(test_batches, test_labels),
               callbacks=[early_stopping])
     model.save("lidar_detection.h5")
