@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from keras.layers import Input, Dense, Reshape, Dropout, Conv1D, MaxPooling1D, Flatten
+from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import layers, models
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, Reshape, BatchNormalization
@@ -17,6 +18,49 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropou
 
 #INPUT SHAPE: (None, 5, 2, 500)
 #NUM CLASSES: 12
+
+# ======================= NEW CNN Function =======================
+# We can possibly use these to improve training dynamically:
+
+# from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
+
+# reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=2, min_lr=0.00001, verbose=1)
+# early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1)
+
+# The callback 'ReduceLROnPlateau' dynamically adjusts the learning rate. We can also use 'EarlyStopping'
+# to prevent any overfitting...
+
+def create_cnn(input_shape, num_classes): 
+    model = Sequential([
+        Conv2D(64, (3, 3), padding='same', activation='relu', input_shape=input_shape),
+        BatchNormalization(),
+        MaxPooling2D((2, 2)),
+        
+        Conv2D(128, (3, 3), padding='same', activation='relu'),
+        BatchNormalization(),
+        MaxPooling2D((2, 2)),
+
+        Conv2D(256, (3, 3), padding='same', activation='relu'),
+        BatchNormalization(),
+        MaxPooling2D((2, 2)),
+
+        Conv2D(512, (3, 3), padding='same', activation='relu'),
+        BatchNormalization(),
+        MaxPooling2D((2, 2)),
+
+        Flatten(),
+
+        Dense(512, activation='relu'),
+        Dropout(0.5),
+        BatchNormalization(),
+
+        Dense(num_classes, activation='softmax')
+    ])
+
+    model.summary()
+
+    return model
+
 
 # ======================= CNN Function =======================    
 def create_3d_cnn(input_shape, num_classes): 
