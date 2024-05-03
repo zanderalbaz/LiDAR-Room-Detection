@@ -58,6 +58,7 @@ def create_cnn(input_shape, num_classes):
     ])
 
     model.summary()
+    model.compile(optimizer=Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])
 
     return model
 

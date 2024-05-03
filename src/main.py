@@ -9,6 +9,7 @@ from keras.utils import to_categorical
 from sklearn.preprocessing import LabelEncoder
 from torch_geometric.datasets import Planetoid
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
 
 def normalize_data(data):
     max_val = np.max(data)
@@ -115,6 +116,50 @@ def load_data(filepath):
 #     density or average intesity. The input shape of the network just has to 
 #     match the voxel grids dimensions (depth, heigh, width, channels)
 # """
+def mainCNN():
+    train_datagen = ImageDataGenerator(
+    rescale=1./255,
+    rotation_range=20,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    shear_range=0.2,
+    zoom_range=0.2,
+    horizontal_flip=True,
+    fill_mode='nearest'
+    )
+
+    validation_datagen = ImageDataGenerator(rescale=1./255)
+
+    train_generator = train_datagen.flow_from_directory(
+    'training path',  # Need to update this with /traing-data/
+    target_size=(160, 160),
+    batch_size=32,
+    color_mode='grayscale',
+    class_mode='categorical'
+    )
+
+    validation_generator = validation_datagen.flow_from_directory(
+        'validation path',  # Need to update this with /testing(validation)-data/
+        target_size=(160, 160),
+        batch_size=32,
+        color_mode='grayscale',
+        class_mode='categorical'
+    )
+    input_shape = (160, 160, 1)  # Since we are using grayscale we will use 1 channel
+    num_classes = 4
+
+    model = build_advanced_model(input_shape, num_classes)
+
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=2, min_lr=0.00001, verbose=1)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1)
+
+    history = model.fit(
+        train_generator,
+        epochs=10,
+        validation_data=validation_generator,
+        callbacks=[reduce_lr, early_stopping]
+    )
+
 def cnn():
     input_shape = (5, 2, 500, 1)
     num_classes = 12
@@ -213,8 +258,9 @@ def gnn():
 
 # =============================== Main ===============================
 def main():
+    mainCNN()
     # cnn()
-    pointNet()
+    # pointNet()
     # gnn()
 
 if __name__ == "__main__":
