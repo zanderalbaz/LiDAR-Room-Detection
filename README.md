@@ -2,10 +2,13 @@
 
 # FHL-LD20 LiDAR Sensor
 
+# LiDAR Pre-Processing
+
+
 # Dataset
 1. located: `src/point_images`
-2. About 100-200 images varying across 3 locations (2 rooms and a hallway, for 4 directions each
-   LABELS:
+2. About 100-200 images varying across 3 locations (2 rooms and a hallway, for 4 directions each)
+3. LABELS:
    + HALLWAY1-NORTH
    + HALLWAY1-EAST
    + HALLWAY1-SOUTH
@@ -30,7 +33,7 @@
      ii. label data points (user input)
      iii. output labeled data points to csv~~
  3. Create CNN to classify data (tune until satisfied with results)
- ~~4. Create graphics comparing ground truth to predictions (for presentation)~~
+    ~~4. Create graphics comparing ground truth to predictions (for presentation)~~
  6. Quantize and Prune CNN
  7. Tune pruned and quantized models (until satisfied)
  8. Create as much documentation as we can at this stage. (as if we were done with the project here)
