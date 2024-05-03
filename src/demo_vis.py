@@ -1,3 +1,7 @@
+#THIS FILE WAS USED TO SHOW THE ACCURACY OF OUR FIRST CNN
+#THIS CNN USED ONLY X, Y POINTS, AND DID NOT TAKE INTO
+#CONSIDERATION DEAD SPACE (2x500 tensor)
+
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -6,21 +10,21 @@ from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.models import load_model
 import matplotlib.pyplot as plt
 
-def normalize_data(data):
+def normalize_data(data): #This is the min/max scaling function from sklearn preprocessing
     max_val = np.max(data)
     min_val = np.min(data)
     normalized_data = 2 * ((data - min_val) / (max_val - min_val)) - 1
     return normalized_data
 
-def processSet(pb_set):
+def processSet(pb_set): #clean points from csv
     pb_set = pb_set.replace('[(', '')
     pb_set = pb_set.replace(')]', '')
     return pb_set.split('), (')
 
-def processPoints(p_list):
+def processPoints(p_list): #process points into
     points = []
     for ps in p_list:
-        points.append(processPoints_(ps))
+        points.append(processPoints_(ps)) #call helper function
     return np.asarray(points)
 
 def processPoints_(ps):
@@ -61,11 +65,10 @@ def load_and_preprocess_data(filename):
 
         labeled_data.append((point_batches, label))
 
-    labels = [label for _, label in labeled_data]
-    encoder = LabelEncoder()
-    encoded_labels = encoder.fit_transform(labels)
-    num_classes = len(encoder.classes_)
-    encoded_labels = to_categorical(encoded_labels, num_classes=num_classes)
+    labels = [label for _, label in labeled_data] #grab each label from our tuples
+    encoder = LabelEncoder() 
+    encoded_labels = encoder.fit_transform(labels) #encode data for use in CNN
+    encoded_labels = to_categorical(encoded_labels, num_classes=len(encoder.classes_) )
 
     labeled_data_encoded = []
     for i in range(len(labeled_data)):
