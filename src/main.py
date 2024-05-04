@@ -136,7 +136,7 @@ def mainCNN():
     batch_size=8,
     color_mode='grayscale',
     class_mode='categorical',
-    subset='training'
+    subset='validation'
     )
 
     input_shape = (160, 160, 1)  # Since we are using grayscale we will use 1 channel
