@@ -8,7 +8,7 @@ The initial scope of this project was to use a 3D point cloud from our LiDAR sen
 Link: https://www.amazon.com/WayPonDEV-360-Degree-Lidar-Sensor/dp/B0C1C4VW47/ref=asc_df_B0C1C4VW47/?tag=hyprod-20&linkCode=df0&hvadid=663203410548&hvpos=&hvnetw=g&hvrand=5461963860498555154&hvpone=&hvptwo=&hvqmt=&hvdev=c&hvdvcmdl=&hvlocint=&hvlocphy=9029132&hvtargid=pla-2187194875134&psc=1&mcid=d87d21ec20b33975b300b3cd7cde4621
 
 
-![alt text](lidar.webp)
+![Lidar Sensor](https://m.media-amazon.com/images/I/41MjeVHQy9L._SX425_.jpg)
 
 
 SPECS:
