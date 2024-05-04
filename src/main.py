@@ -140,18 +140,18 @@ def mainCNN():
     )
 
     input_shape = (160, 160, 1)  # Since we are using grayscale we will use 1 channel
-    num_classes = 8
+    num_classes = 12
 
     model = create_cnn(input_shape, num_classes)
 
-    # reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=10, min_lr=0.00001, verbose=1)
+    # reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=7, min_lr=0.00001, verbose=1)
     # early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
 
     model.fit(
         train_generator,
-        epochs=30,
+        epochs=250,
         validation_data=val_generator,
-        # callbacks=[reduce_lr, early_stopping]
+        # callbacks=[reduce_lr]
     )
 
 def cnn():

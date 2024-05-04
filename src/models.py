@@ -3,9 +3,10 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from keras.layers import Input, Dense, Reshape, Dropout, Conv1D, MaxPooling1D, Flatten
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam, RMSprop, SGD
 from tensorflow.keras import layers, models
 from tensorflow.keras.models import Sequential
+from tensorflow.keras.regularizers import l2
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, Reshape, BatchNormalization
 
 
@@ -32,35 +33,29 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropou
 
 def create_cnn(input_shape, num_classes): 
     model = Sequential([
-        Conv2D(64, (7, 7), padding='same', activation='relu', input_shape=input_shape),
+        Conv2D(8, (3, 3), padding='same', activation='relu', input_shape=input_shape, kernel_regularizer=l2(0.001)),
         BatchNormalization(),
         MaxPooling2D((2, 2)),
-        
-        Conv2D(128, (5, 5), padding='same', activation='relu'),
-        Dropout(0.5),
-        BatchNormalization(),
-        MaxPooling2D((2, 2)),
+        Dropout(0.3),
 
-        Conv2D(256, (3, 3), padding='same', activation='relu'),
-        Dropout(0.5),
+        Conv2D(16, (3, 3), padding='same', activation='relu', kernel_regularizer=l2(0.001)),
         BatchNormalization(),
         MaxPooling2D((2, 2)),
-
-        Conv2D(512, (3, 3), padding='same', activation='relu'),
-        Dropout(0.5),
-        BatchNormalization(),
-        MaxPooling2D((2, 2)),
+        Dropout(0.4),
 
         Flatten(),
 
-        Dense(100, activation='relu'),
+        Dense(32, activation='relu', kernel_regularizer=l2(0.001)),
         BatchNormalization(),
+        Dropout(0.6),
 
         Dense(num_classes, activation='softmax')
     ])
 
     model.summary()
-    model.compile(optimizer=Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])
+
+    # We tested multiple optimizers here like SGD, RMSprop, Adam
+    model.compile(optimizer=Adam(learning_rate=0.00001), loss='categorical_crossentropy', metrics=['accuracy'])
 
     return model
 
