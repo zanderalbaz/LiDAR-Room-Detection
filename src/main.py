@@ -124,7 +124,7 @@ def mainCNN():
     train_generator = datagen.flow_from_directory(
     'point_images',
     target_size=(160, 160),
-    batch_size=16,
+    batch_size=8,
     color_mode='grayscale',
     class_mode='categorical',
     subset='training'
@@ -133,7 +133,7 @@ def mainCNN():
     val_generator = datagen.flow_from_directory(
     'point_images',
     target_size=(160, 160),
-    batch_size=16,
+    batch_size=8,
     color_mode='grayscale',
     class_mode='categorical',
     subset='validation'
