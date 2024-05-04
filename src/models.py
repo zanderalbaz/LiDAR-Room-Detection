@@ -35,6 +35,10 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropou
 #THIS IS OUR BEST WORKING CNN
 def create_cnn(input_shape, num_classes): 
     model = Sequential([
+        # Originally we started here with a large kernal size of 64 alternating up x2 in each layer (64,128,256,512) not to mention
+        # we had 2 extra Conv2D layers. After extensive tests yeilding limited results we decided that model we built is too complex.
+        # This is when we dumbed it down by taking away 2 layers, adjusted our dropout and finally got some okay results. With further work
+        # we plan to rebuild our cnn furthermore.
         Conv2D(8, (3, 3), padding='same', activation='relu', input_shape=input_shape, kernel_regularizer=l2(0.001)),
         BatchNormalization(),
         MaxPooling2D((2, 2)),
@@ -56,7 +60,8 @@ def create_cnn(input_shape, num_classes):
 
     model.summary()
 
-    # We tested multiple optimizers here like SGD, RMSprop, Adam
+    # We tested multiple optimizers here like SGD, RMSprop, Adam. Given the orginal issues with our models architecth we didn't find it 
+    # "safe" to actually understand which one performed best. None the less, Adam had higher accuracy scores in the current version.
     model.compile(optimizer=Adam(learning_rate=0.00001), loss='categorical_crossentropy', metrics=['accuracy'])
 
     return model
@@ -69,7 +74,7 @@ def create_3d_cnn(input_shape, num_classes):  #THIS IS AN OLD CNN, THIS IS THE D
             Conv2D(40, (2, 2), padding="same", activation="relu"),
             Conv2D(20, (2, 2), padding="same", activation="relu"),
             BatchNormalization(),
-            MaxPooling2D((1, 2)),  # Pool only along the 500 dimension
+            MaxPooling2D((1, 2)),
     ])
     assert model.output_shape == (None, 5, 1, 20)
 
@@ -134,6 +139,10 @@ def tnet(input_points, num_features):
     transform = Reshape((num_features, num_features))(transform)  # Reshape to (num_features, num_features)
     
     return transform
+
+    # The issue is mainly somewhere between here. Since we are working with 2D data, we have not yet gotten the 
+    # output shape from the transformative model to match the PointNet models input given the complexity of the 
+    # LiDAR data. 
     
 def create_pointnet_model(num_points, num_features, num_classes):
     input_points = Input(shape=(num_points, num_features))

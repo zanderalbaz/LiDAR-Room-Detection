@@ -52,6 +52,9 @@ def mainCNN():
 
     model = create_cnn(input_shape, num_classes)
 
+    # we originally wanted to test implementing the two lines of code commented below, but we first wanted 
+    # to get the model working properly efore testing cut-off's
+
     # reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=7, min_lr=0.00001, verbose=1)
     # early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
 
@@ -59,7 +62,7 @@ def mainCNN():
         train_generator,
         epochs=110,
         validation_data=val_generator,
-        # callbacks=[reduce_lr]
+        # callbacks=[reduce_lr, early_stopping]
     )
 # THIS IS THE FUNCTION TO RUN OUR DEMO CNN. THIS IS NOT OUR FINAL CNN
 
@@ -114,6 +117,10 @@ def pointNet():
 # GNN Example
 
 # THIS WAS A PROTOTYPE. THIS IS ALSO NOT WORKING.
+# We originally wanted to implement this because we found some key advantages due to its unique
+# structure and capabilities. This includes its ability to model data that embodies relationships 
+# and interconnections, such at the spatial relationships between points in a point cloud. GNN's can
+# also generalize across different scales, making it useful for data being collected at varying resolutions.
 def gnn():
     num_features = 3
     hidden_channels = 16
