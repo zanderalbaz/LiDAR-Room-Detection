@@ -6,6 +6,7 @@ import torch
 import pandas as pd
 import numpy as np
 import re
+import keras
 from keras.utils import to_categorical
 from sklearn.preprocessing import LabelEncoder
 from torch_geometric.datasets import Planetoid
@@ -56,11 +57,17 @@ def mainCNN():
 
     model.fit(
         train_generator,
-        epochs=250,
+        epochs=110,
         validation_data=val_generator,
         # callbacks=[reduce_lr]
     )
 # THIS IS THE FUNCTION TO RUN OUR DEMO CNN. THIS IS NOT OUR FINAL CNN
+
+    # test_labels = keras.utils.to_categorical(flowfromdir.labels, num_classes=12)
+
+    model.evaluate(val_generator)
+
+
 def cnn():
     input_shape = (5, 2, 500, 1)
     num_classes = 12
