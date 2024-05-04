@@ -17,6 +17,10 @@ SPECS:
 + 360 deg scans
 + Anti-ambient light: 30000Lux
 
+
+Sensor Documentation: https://wiki.youyeetoo.com/en/Lidar/LD20
+
+
 # LiDAR Pre-Processing
 For this project, we decided to create our own dataset for this project. This part took quite a long time since we had issues getting our sensor to read data correctly. We needed to parse our sensor data directly from the serial port, then do some math to figure out the angle of each distance in the packet. After only selecting points with high intensity (sensor is confident it is correct). We then took the angle and distance, and converted it into an x,y point.
 
