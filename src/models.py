@@ -17,7 +17,7 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropou
 # from torch_geometric.datasets import Planetoid
 # import torch_geometric.transforms as T
 
-#INPUT SHAPE: (None, 5, 2, 500)
+#INPUT SHAPE: 160x160
 #NUM CLASSES: 12
 
 # ======================= NEW CNN Function =======================
@@ -31,6 +31,8 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropou
 # The callback 'ReduceLROnPlateau' dynamically adjusts the learning rate. We can also use 'EarlyStopping'
 # to prevent any overfitting...
 
+
+#THIS IS OUR BEST WORKING CNN
 def create_cnn(input_shape, num_classes): 
     model = Sequential([
         Conv2D(8, (3, 3), padding='same', activation='relu', input_shape=input_shape, kernel_regularizer=l2(0.001)),
@@ -61,7 +63,7 @@ def create_cnn(input_shape, num_classes):
 
 
 # ======================= CNN Function =======================    
-def create_3d_cnn(input_shape, num_classes):  #
+def create_3d_cnn(input_shape, num_classes):  #THIS IS AN OLD CNN, THIS IS THE DEMO CNN
     model = Sequential([
             Reshape((5, 2, 500), input_shape=input_shape),  # Ensure input shape is correct
             Conv2D(40, (2, 2), padding="same", activation="relu"),
@@ -111,6 +113,9 @@ def create_3d_cnn(input_shape, num_classes):  #
 #     spatial transformation of the input data (Whats most important.)
 # """
 
+#THIS MODEL DOES NOT PERFORM WELL
+#WE ABANDONED IT FOR ANOTHER
+
 from keras.initializers import Constant
 
 def tnet(input_points, num_features):
@@ -129,7 +134,7 @@ def tnet(input_points, num_features):
     transform = Reshape((num_features, num_features))(transform)  # Reshape to (num_features, num_features)
     
     return transform
-
+    
 def create_pointnet_model(num_points, num_features, num_classes):
     input_points = Input(shape=(num_points, num_features))
     transformed = tnet(input_points, num_features)
@@ -149,6 +154,7 @@ def create_pointnet_model(num_points, num_features, num_classes):
     return model
 
 # ======================= GNN Function =======================
+#DOES NOT WORK
 def create_gnn(num_features, hidden_channels, num_classes):
     class GNN(torch.nn.Module):
         def __init__(self):
@@ -167,4 +173,3 @@ def create_gnn(num_features, hidden_channels, num_classes):
     return GNN()
 
 
-# create_3d_cnn(input_shape=(5,2,500), num_classes=12)
