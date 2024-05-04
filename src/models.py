@@ -32,26 +32,28 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropou
 
 def create_cnn(input_shape, num_classes): 
     model = Sequential([
-        Conv2D(64, (3, 3), padding='same', activation='relu', input_shape=input_shape),
+        Conv2D(64, (7, 7), padding='same', activation='relu', input_shape=input_shape),
         BatchNormalization(),
         MaxPooling2D((2, 2)),
         
-        Conv2D(128, (3, 3), padding='same', activation='relu'),
+        Conv2D(128, (5, 5), padding='same', activation='relu'),
+        Dropout(0.5),
         BatchNormalization(),
         MaxPooling2D((2, 2)),
 
         Conv2D(256, (3, 3), padding='same', activation='relu'),
+        Dropout(0.5),
         BatchNormalization(),
         MaxPooling2D((2, 2)),
 
         Conv2D(512, (3, 3), padding='same', activation='relu'),
+        Dropout(0.5),
         BatchNormalization(),
         MaxPooling2D((2, 2)),
 
         Flatten(),
 
-        Dense(512, activation='relu'),
-        Dropout(0.5),
+        Dense(100, activation='relu'),
         BatchNormalization(),
 
         Dense(num_classes, activation='softmax')
