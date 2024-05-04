@@ -1,13 +1,33 @@
 # Problem Statement
+We wanted to create a neural network that classifies objects based off of processed LiDAR data. Our main goal is to add thoughts and research, revolutionizing how we understand and interact with the physical world using LiDAR technology and AI, specifically in geospatial analysis. 
+
+
+The initial scope of this project was to use a 3D point cloud from our LiDAR sensor to classify different types of terrain. After realizing this goal was far-fetched for our timeframe, we reduced the problem size to use a 2D point cloud trying to classify which room we are in and what direction we are facing. We want to be able to feed our model new data, and have it classify the room and direction it is in somewhat decently.
 
 # FHL-LD20 LiDAR Sensor
+Link: https://www.amazon.com/WayPonDEV-360-Degree-Lidar-Sensor/dp/B0C1C4VW47/ref=asc_df_B0C1C4VW47/?tag=hyprod-20&linkCode=df0&hvadid=663203410548&hvpos=&hvnetw=g&hvrand=5461963860498555154&hvpone=&hvptwo=&hvqmt=&hvdev=c&hvdvcmdl=&hvlocint=&hvlocphy=9029132&hvtargid=pla-2187194875134&psc=1&mcid=d87d21ec20b33975b300b3cd7cde4621
+
+
+![alt text](lidar.webp)
+
+
+SPECS:
++ Distance Range: 8m
++ Ranging Accuracy: 1 deg, 2300Hz
++ 360 deg scans
++ Anti-ambient light: 30000Lux
 
 # LiDAR Pre-Processing
+For this project, we decided to create our own dataset for this project. This part took quite a long time since we had issues getting our sensor to read data correctly. We needed to parse our sensor data directly from the serial port, then do some math to figure out the angle of each distance in the packet. After only selecting points with high intensity (sensor is confident it is correct). We then took the angle and distance, and converted it into an x,y point.
 
 
-# Dataset
+After this, we collected 500 of these points, quantized them into bins of 10, removed duplicates, then created a 160x160 tensor that represents the 8 meter radius the sensor rated for. Before inputting the points into the tensor we applied a gaussian filter to the points to reduce noise. We also applied DBSCAN, and removed points it declared as noise. Each point in the tensor is either a zero if no point was collected at that location, or a 1 if there was a point at that location. These tensors were then stored as images to make training easier.
+
+
+
+# Dataset (cleaned)
 1. located: `src/point_images`
-2. About 100-200 images varying across 3 locations (2 rooms and a hallway, for 4 directions each)
+2. About 100-200 images (160x160) varying across 3 locations (2 rooms and a hallway) for 4 directions each
 3. LABELS:
    + HALLWAY1-NORTH
    + HALLWAY1-EAST
@@ -22,8 +42,11 @@
    + RADY131-SOUTH
    + RADY131-WEST
 
-# LiDAR-Room-Detection
- Take LiDAR data, process it, and run it through a deep CNN to classify different rooms. If we have time, we will port our code onto a raspberry pi, and strap it to a drone. We only plan on getting to the data collection phase of this part of the project, but ideally, we will teach the drone how to avoid objects, and detect much more than just rooms.
+# Future Directions
+Now that we have a decent model working, our next steps are to refine our current model. We may also play with our image size, as it seems smaller images are easier to classify. After we are satisfied with our results, we will move on to quantizing and pruning. Once we have a fine-tuned model, we plan on moving our neural network onto a Raspberry Pi, which we want to strap onto a small robot or drone. We can then see if our model works real time autonomously.
+
+
+Ideally once we have a good proof of concept, we will implement some mechanism to capture 3D LiDAR data on the drone/robot. All we should need is a precise servo or stepper motor to rotate our sensor. With that data, we can move on to classifying real objects, making 3D scans of rooms, and much more. 
 
  ## TODO: (in somewhat order of relative importance)
  1. ~~Attempt to remove noise from data~~
