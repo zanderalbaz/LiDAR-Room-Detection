@@ -140,7 +140,7 @@ def mainCNN():
     )
 
     input_shape = (160, 160, 1)  # Since we are using grayscale we will use 1 channel
-    num_classes = 7
+    num_classes = 8
 
     model = create_cnn(input_shape, num_classes)
 
