@@ -45,6 +45,12 @@ After this, we collected 500 of these points, quantized them into bins of 10, re
    + RADY131-EAST
    + RADY131-SOUTH
    + RADY131-WEST
+  
+# Models
+We created quite a few models. Some of our earlier iterations and the current model we used are located in: `src/models.py`
+
+
+We are running our models using `src/main.py`
 
 # Future Directions
 Now that we have a decent model working, our next steps are to refine our current model. We may also play with our image size, as it seems smaller images are easier to classify. After we are satisfied with our results, we will move on to quantizing and pruning. Once we have a fine-tuned model, we plan on moving our neural network onto a Raspberry Pi, which we want to strap onto a small robot or drone. We can then see if our model works real time autonomously.
