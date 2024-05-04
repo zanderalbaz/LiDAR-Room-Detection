@@ -55,7 +55,7 @@ Ideally once we have a good proof of concept, we will implement some mechanism t
      i. collect N data points
      ii. label data points (user input)
      iii. output labeled data points to csv~~
- 3. Create CNN to classify data (tune until satisfied with results)
+~~3. Create CNN to classify data (tune until satisfied with results)~~
     ~~4. Create graphics comparing ground truth to predictions (for presentation)~~
  6. Quantize and Prune CNN
  7. Tune pruned and quantized models (until satisfied)
