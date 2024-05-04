@@ -76,15 +76,16 @@ def load_and_preprocess_data(filename):
         encoded_label = encoded_labels[i]
         labeled_data_encoded.append((point_batches, encoded_label))
     train_data, test_data = train_test_split(labeled_data_encoded, test_size=0.1, random_state=17, shuffle=False)
-    encoder_mapping = dict(zip(encoder.classes_, encoder.transform(encoder.classes_)))
+    encoder_mapping = dict(zip(encoder.classes_, encoder.transform(encoder.classes_))) #create encoder mapping to go from one-hot to labels
     print(encoder_mapping)
     return train_data, test_data, num_classes, encoder.classes_
 
 def create_visualization(model, batch, true_class):
-    predicted_probs = model.predict(batch.reshape(1, 500, 2))
+    predicted_probs = model.predict(batch.reshape(1, 500, 2)) #Run the random batch through predict
     predicted_label_index = np.argmax(predicted_probs)
-    predicted_class = class_names[predicted_label_index]
+    predicted_class = class_names[predicted_label_index] #get prediction
     xs, ys = batch
+    #plot points, and true vs pred (its not good lol)
     plt.scatter(xs, ys, color='b', label='Points')
     plt.title(f'Predicted: {predicted_class}, True: {true_class}')
     plt.xlabel('X')
@@ -95,11 +96,11 @@ def create_visualization(model, batch, true_class):
 model = load_model("lidar_detection.h5")
 
 train_data, test_data, num_classes, class_names = load_and_preprocess_data('labeled_points.csv')
-
+#Run the visualization on random point batches 10 times
 for i in range(10):
     instance_id = np.random.randint(len(test_data))
 
-    selected_batch = np.array(test_data[instance_id][0][np.random.randint(5)])
+    selected_batch = np.array(test_data[instance_id][0][np.random.randint(5)]) #select a random point batch from an instance
     true_class = class_names[np.argmax(test_data[instance_id][1])]
-
+    #run vis func
     create_visualization(model, selected_batch, true_class)
