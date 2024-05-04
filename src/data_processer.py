@@ -82,10 +82,11 @@ def outputPointTensorsAsImages():
         if i % 100 == 0: #Status print 
             print(i)
         label = tensor_labels[i] #get tensor label
-        plt.imshow(point_tensors[i], cmap="Greys") #turn tensor into image
-        plt.axis('off') #isolate image
-        plt.savefig(f"point_images/{label}/{label_counts[label]:04}.jpg",  bbox_inches='tight', pad_inches=0) #output image to correct folder
-        label_counts[label] += 1 #increment label count (so we dont overwrite images)
+        if "RADY131" in label: #Crashed, had to start again at RADY131 (FEEL FREE TO REMOVE THIS IF YOU WANT TO USE IF WITH YOUR OWN DATA)
+            plt.imshow(point_tensors[i], cmap="Greys") #turn tensor into image
+            plt.axis('off') #isolate image
+            plt.savefig(f"point_images/{label}/{label_counts[label]:04}.jpg",  bbox_inches='tight', pad_inches=0) #output image to correct folder
+            label_counts[label] += 1 #increment label count (so we dont overwrite images)
 
 if __name__ == '__main__':
     points = pd.read_csv('labeled_points.csv', sep='\t', header=None, names=["point_batch1", "point_batch2", "point_batch3", "point_batch4", "point_batch5", "Room+Direction"])
